@@ -1,0 +1,19 @@
+{
+	"dsScheduleData": {
+		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+		"Input_Reference": {
+			"datetime": "{{current_dttm}}",
+			"id": "{{ _.current_dttm_id }}",
+			"input_type": "CHANGE",
+			"organisation_id": 2,
+			"dataset_id": "SOUTH"
+		},
+		"Schedule_Event": {
+			"id": "be2be6024efb4aa4a5409fadbabf1d15", // guid
+			"date_time_stamp": "{{current_dttm}}",
+			"event_date_time": "{{current_dttm}}",
+			"event_type_id":"AO", // AF for attention off
+			"resource_id":"99901" // ensure this ID exists in your planner
+		}
+	}
+}

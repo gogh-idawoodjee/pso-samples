@@ -1,0 +1,27 @@
+{
+   "Broadcast":{
+      "id":"PSO_MANUAL_CHANGE_TO_HOST",
+      "broadcast_type_id":"REST",
+      "allocation_type":"4",
+      "active":"true",
+      "plan_type":"WORKBENCH",
+      "minimum_plan_quality":"0",
+      "minimum_step_interval":"1",
+      "once_only":"false"
+   },
+   "Broadcast_Parameter":{
+      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
+      "parameter_name":"url",
+      "parameter_value":"https://webhook.site/f6cc25db-8f6c-472a-83a2-a1e697e35b6c"
+   },
+   "Broadcast_Parameter":{
+      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
+      "parameter_name":"mediatype",
+      "parameter_value":"application/json"
+   },
+   "Broadcast_Parameter":{
+      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
+      "parameter_name":"StandardSendScheduleExceptionAccepts",
+      "parameter_value":"yes"
+   }
+}

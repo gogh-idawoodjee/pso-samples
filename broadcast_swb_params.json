@@ -2,9 +2,9 @@
    "Broadcast":{
       "id":"PSO_MANUAL_CHANGE_TO_HOST",
       "broadcast_type_id":"REST",
-      "allocation_type":"4",
+      "allocation_type":"4",   // 4 = SWB
       "active":"true",
-      "plan_type":"WORKBENCH",
+      "plan_type":"WORKBENCH", // value CHANGE is not allowed
       "minimum_plan_quality":"0",
       "minimum_step_interval":"1",
       "once_only":"false"
@@ -21,7 +21,7 @@
    },
    "Broadcast_Parameter":{
       "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
-      "parameter_name":"StandardSendScheduleExceptionAccepts",
-      "parameter_value":"yes"
+      "parameter_name":"StandardSendScheduleExceptionAccepts", 
+      "parameter_value":"yes" // if host system accepts scheduling exception comments + acks set to yes
    }
 }

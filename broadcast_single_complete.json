@@ -1,0 +1,43 @@
+{
+    "dsScheduleData": {
+        "@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+        "Broadcast": {
+            "active": "true",
+            "broadcast_type_id": "WCF",
+            "description": "One-Time DSE Broadcast",
+            "id": "DSE_TO_FSM_202284_202922",
+            "input_reference_id": "DSE_TO_FSM_2022_8_4_20_29_22",
+            "minimum_plan_quality": "60",
+            "minimum_step_interval": "1",
+            "once_only": "true",
+            "plan_type": "COMPLETE",
+            "time_filter_end": "2022-10-03T20:29:22+00:00"
+        },
+        "Broadcast_Parameter": [
+            {
+                "broadcast_id": "DSE_TO_FSM_202284_202922",
+                "parameter_name": "address",
+                "parameter_value": "https://brinkshome-fsm-tst.ifs.cloud:443/M5Service.svc/IBroadcast360"
+            },
+            {
+                "broadcast_id": "DSE_TO_FSM_202284_202922",
+                "parameter_name": "binding",
+                "parameter_value": "BINDING_BASIC_HTTPS"
+            }
+        ],
+        "Input_Reference": {
+            "dataset_id": "BHS_TEST_20210407",
+            "datetime": "2022-08-04T20:29:22+00:00",
+            "description": "One-Time DSE Broadcast",
+            "duration": "P7D",
+            "enacting_app_instance_id": "10.0.0.4",
+            "enacting_app_type_id": "SIM",
+            "id": "DSE_TO_FSM_2022_8_4_20_29_22",
+            "input_type": "CHANGE",
+            "load_status": "-1",
+            "organisation_id": "2",
+            "process_type": "DYNAMIC",
+            "schedule_data": "CONTINUOUS"
+        }
+    }
+}

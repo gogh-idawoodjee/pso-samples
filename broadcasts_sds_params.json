@@ -1,0 +1,20 @@
+{
+    "Broadcast": {
+        "active": "true",
+        "allocation_type": "8", // 8 is SDS
+        "broadcast_type_id": "REST",
+        "id": "SDS2Webhook",
+        "once_only": "false", // must be false
+        "plan_type": "COMPLETE"
+    },
+    "Broadcast_Parameter": {
+        "broadcast_id": "SDS2Webhook",
+        "parameter_name": "url",
+        "parameter_value": "https://webhook.site/0b769041-2a54-4637-b05e-d2cc2b74dcfd?type=complete"
+    },
+        "Broadcast_Parameter": {
+        "broadcast_id": "SDS2Webhook",
+        "parameter_name": "mediatype",
+        "parameter_value": "application/json"
+    }
+}

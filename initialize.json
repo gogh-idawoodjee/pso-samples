@@ -1,0 +1,27 @@
+{
+	"dsScheduleData": {
+		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+		"Input_Reference": {
+			"datetime": "{{ _.current_dttm }}",
+			"id": "d2891c481b564984ac6afb823dec43c5",
+			"description": "Clear all schedule data",
+			"input_type": "LOAD",
+			"organisation_id": "2",
+			"dataset_id": "{{valid_dataset_id}}",
+			"duration": "P7D",
+			"process_type": "APPOINTMENT",
+			"enacting_app_type_id": "the_loader",
+			"enacting_app_instance_id": "10.0.0.99"
+		},
+		"Source_Data": {
+			"source_data_type_id": "RAM",
+			"sequence": "1"
+		},
+		"Source_Data_Parameter": {
+			"source_data_type_id": "RAM",
+			"sequence": "1",
+			"parameter_name": "rota_id",
+			"parameter_value": "{{valid_rota_id}}"
+		}
+	}
+}

@@ -6,14 +6,14 @@
 			"id": "{{ _.current_dttm_id }}",
 			"input_type": "CHANGE",
 			"organisation_id": 2,
-			"dataset_id": "SOUTH"
+			"dataset_id": "valid_dataset_id"
 		},
 		"Schedule_Event": {
-			"id": "0ae3e23d3d4d4deb9677457590771aa5",
+			"id": "0ae3e23d3d4d4deb9677457590771aa5", // guid
 			"date_time_stamp": "{{current_dttm}}",
 			"event_date_time": "{{current_dttm}}",
 			"event_type_id":"RO", // RF for logoff
-			"resource_id":"99905" // ensure this ID exists in your planner
+			"resource_id":"resource_0001" // ensure this ID exists in your planner
 		}
 	}
 }

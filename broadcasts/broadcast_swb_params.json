@@ -1,27 +1,29 @@
 {
-   "Broadcast":{
-      "id":"PSO_MANUAL_CHANGE_TO_HOST",
-      "broadcast_type_id":"REST",
-      "allocation_type":"4",   // 4 = SWB
-      "active":"true",
-      "plan_type":"WORKBENCH", // value CHANGE is not allowed
-      "minimum_plan_quality":"0",
-      "minimum_step_interval":"1",
-      "once_only":"false"
-   },
-   "Broadcast_Parameter":{
-      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
-      "parameter_name":"url",
-      "parameter_value":"https://webhook.site/f6cc25db-8f6c-472a-83a2-a1e697e35b6c"
-   },
-   "Broadcast_Parameter":{
-      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
-      "parameter_name":"mediatype",
-      "parameter_value":"application/json"
-   },
-   "Broadcast_Parameter":{
-      "broadcast_id":"PSO_MANUAL_CHANGE_TO_HOST",
-      "parameter_name":"StandardSendScheduleExceptionAccepts", 
-      "parameter_value":"yes" // if host system accepts scheduling exception comments + acks set to yes
-   }
+    "Broadcast": {
+        "active": "true",
+        "allocation_type": "4", // 4 = SWB
+        "broadcast_type_id": "REST",
+        "id": "PSO_MANUAL_CHANGE_TO_HOST",
+        "minimum_plan_quality": "0",
+        "minimum_step_interval": "1",
+        "once_only": "false",
+        "plan_type": "WORKBENCH" // value CHANGE is not allowed; the host will have to send updates back to PSO
+    },
+    "Broadcast_Parameter": [
+        {
+            "broadcast_id": "PSO_MANUAL_CHANGE_TO_HOST",
+            "parameter_name": "url",
+            "parameter_value": "https://webhook.site/f6cc25db-8f6c-472a-83a2-a1e697e35b6c"
+        },
+        {
+            "broadcast_id": "PSO_MANUAL_CHANGE_TO_HOST",
+            "parameter_name": "mediatype",
+            "parameter_value": "application/json"
+        },
+        {
+            "broadcast_id": "PSO_MANUAL_CHANGE_TO_HOST",
+            "parameter_name": "StandardSendScheduleExceptionAccepts",
+            "parameter_value": "yes" // if host system accepts scheduling exception comments + acks set to yes
+        }
+    ]
 }

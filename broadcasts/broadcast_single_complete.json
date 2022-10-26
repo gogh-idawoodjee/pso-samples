@@ -9,7 +9,7 @@
         "minimum_step_interval": "1",
         "once_only": "true",
         "plan_type": "COMPLETE",
-        "time_filter_end": "2022-10-03T20:29:22+00:00" // 
+        "time_filter_end": "2022-10-03T20:29:22+00:00" // optional end date
     },
     "Broadcast_Parameter": [
         {

@@ -3,7 +3,7 @@
         "active": "true",
         "broadcast_type_id": "REST",
         "description": "One-Time DSE Broadcast",
-        "id": "DSE_TO_FSM_202284_202922",
+        "id": "Schedule_Changes",
         "allocation_type": "1",
         "minimum_plan_quality": "100",
         "minimum_step_interval": "1",
@@ -13,14 +13,29 @@
     },
     "Broadcast_Parameter": [
         {
-            "broadcast_id": "DSE_TO_FSM_202284_202922", // From Broadcast.id
+            "broadcast_id": "Schedule_Changes", // From Broadcast.id
             "parameter_name": "url",
             "parameter_value": "https://webhook.site/f6cc25db-8f6c-472a-83a2-a1e697e35b6c"
         },
         {
-            "broadcast_id": "DSE_TO_FSM_202284_202922", // From Broadcast.id
+            "broadcast_id": "Schedule_Changes", // From Broadcast.id
             "parameter_name": "mediatype",
             "parameter_value": "application/json"
-        }
+        },
+        {
+            "broadcast_id": "Schedule_Changes",
+            "parameter_name": "auth_token_url", // required if needing to login to endpoint
+            "parameter_value": "https://company.oktapreview.com/oauth2/adf4c244-bb33-40fd-bce2-b8e962bd3f55/v1/token"
+        },
+        {
+            "broadcast_id": "Schedule_Changes",
+            "parameter_name": "username",
+            "parameter_value": "1f95b86f-91b8-44b4-8ce6-b56a084602ac"
+            },
+            {
+            "broadcast_id": "Schedule_Changes",
+            "parameter_name": "password",
+            "parameter_value": "4e19b477-bb94-4bf9-86e9-6adfb5951e0d"
+            }
     ]
 }

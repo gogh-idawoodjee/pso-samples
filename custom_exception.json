@@ -1,0 +1,14 @@
+{
+    "Custom_Exception": {
+        "id": "a1faeb9b09e54bdbbcf78a430276b675",
+        "activity_id": "6a347a2f-9db0", // can be either related to an activity or a resource or both
+        "resource_id": "resource_001", // can be either related to an activity or a resource or both
+        "schedule_exception_type_id": "1001"  // needs to be predefined in administration/organization/scheduling exceptions
+    },
+    "Custom_Exception_Data": {
+        "custom_exception_id": "a1faeb9b09e54bdbbcf78a430276b675",
+        "label": "label text", // give it a label
+        "sequence": "1",
+        "value": "more detail" // give it more detail
+    }
+}

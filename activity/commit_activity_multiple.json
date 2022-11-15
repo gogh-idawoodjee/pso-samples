@@ -1,0 +1,42 @@
+{
+    "dsScheduleData": {
+        "@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+        "Input_Reference": {
+            "dataset_id": "dataset_id",
+            "datetime": "2022-11-15T21:14:03+00:00",
+            "description": "Committing 2 Activities",
+            "id": "97c0e231048b45249d4eedccf1c51c16",
+            "input_type": "CHANGE",
+            "organisation_id": "2"
+        },
+        "Activity_Status": [
+            {
+                "activity_id": "Activity-111",
+                "date_time_earliest": "2022-10-21T18:16:05+00:00",
+                "date_time_fixed": "2022-10-21T18:16:05+00:00",
+                "date_time_stamp": "2022-11-15T21:14:03+00:00",
+                "date_time_status": "2022-11-15T21:14:03+00:00",
+                "duration": "PT1H0M",
+                "fixed": true,
+                "reason": "Just Because",
+                "resource_id": "21307",
+                "status_id": 30,
+                "visit_id": 1
+            },
+            {
+                "activity_id": "Activity-112",
+                "date_time_earliest": "2022-10-21T19:16:05+00:00",
+                "date_time_fixed": "2022-10-21T19:16:05+00:00",
+                "date_time_stamp": "2022-11-15T21:14:03+00:00",
+                "date_time_status": "2022-11-15T21:14:03+00:00",
+                "duration": "PT1H0M",
+                "fixed": true,
+                "reason": "Just Because",
+                "resource_id": "21307",
+                "status_id": 30,
+                "visit_id": 1
+            }
+        ]
+
+    }
+}

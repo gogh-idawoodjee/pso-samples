@@ -1,0 +1,33 @@
+{
+    "DsSystemData": {
+        "@xmlns": "http://360scheduling.com/Schema/DsSystemData.xsd",
+        "Profile_Parameter": [
+            {
+                "parameter_application_type_id": "ALL",
+                "parameter_id": "TravelCalculationOption",
+                "parameter_value": "HierarchicalTravelMatrix",
+                "profile_id": "DEFAULT"
+            },
+            {
+                "parameter_application_type_id": "ALL",
+                "parameter_id": "HierarchicalDatabaseMatrixId",
+                "parameter_value": "NA",
+                "profile_id": "DEFAULT"
+            },
+            {
+                "parameter_application_type_id": "SWB",
+                "parameter_id": "iSWBMapType",
+                "parameter_value": "ESRI",
+                "profile_id": "DEFAULT"
+            }
+        ],
+        "System_Input": {
+            "id": "0",
+            "input_type": "DATA",
+            "organisation_id": "1",
+            "requesting_app_instance_id": "ISH-PSO-01",
+            "requesting_app_type_id": "PSW",
+            "user_id": "ish@thetechnodro.me"
+        }
+    }
+}

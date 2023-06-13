@@ -33,7 +33,7 @@
 		"Activity_SLA": {
 			"activity_id": "779f81c1c2a74cecb362b5a223061d0f",
 			"sla_type_id": "Appointment",
-			"datetime_start": "2023-04-17T17:28:39", // typically matches Appointment_Request. appointment_template_datetime
+			"datetime_start": "2023-04-17T17:28:39", // typically matches Appointment_Request.appointment_template_datetime
 			"datetime_end": "2023-04-21T17:28:39", // typicaly datetime_start + 21 days
 			"priority": 1,
 			"start_based": true

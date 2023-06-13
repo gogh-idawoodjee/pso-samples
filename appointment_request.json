@@ -1,0 +1,55 @@
+{
+	"dsScheduleData": {
+		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+		"Input_Reference": {
+			"datetime": "2023-04-12T08:00:00+00:00",	// always current datetime
+			"id": "5fb7f88e54404ae2ad398f9702df8b20", // guid
+			"description": "Appointment Request",
+			"input_type": "CHANGE",
+			"organisation_id": "2",
+			"dataset_id": "NORTH" // dataset must exist and be active in PSO
+		},
+		"Appointment_Request": {
+			"id": "9893e5cde9bf4f0b872afee460f9967f", // guid
+			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", // must match Activity.id
+			"appointment_template_datetime": "2023-04-12T08:00:00+00:00", // start of search
+			"appointment_template_id": "STANDARD", // appointment template must exist in PSO			
+			"offer_expiry_datetime": "2023-04-13T18:48:50+00:00" // now + 5 minutes
+		},
+		"Activity": {
+			"id": "779f81c1c2a74cecb362b5a223061d0f", // unique identifier of task/activity
+			"activity_class_id": "CALL",
+			"activity_type_id": "INSTALL",
+			"location_id": "779f81c1c2a74cecb362b5a223061d0f", // must match Location.id 
+			"priority": 2,
+			"description": "Appointment Request",
+			"date_time_created": "2023-02-28T18:43:50+00:00",
+			"date_time_open": "2023-02-28T18:43:50+00:00",
+			"base_value": 1000,
+			"split_allowed": true,
+			"visit": 1
+		},
+		
+		"Activity_SLA": {
+			"activity_id": "779f81c1c2a74cecb362b5a223061d0f",
+			"sla_type_id": "Appointment",
+			"datetime_start": "2023-04-17T17:28:39", // typically matches Appointment_Request. appointment_template_datetime
+			"datetime_end": "2023-04-21T17:28:39", // typicaly datetime_start + 21 days
+			"priority": 1,
+			"start_based": true
+		},
+		"Activity_Status": {
+			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", // must match Activity.id
+			"status_id": -1,
+			"date_time_status": "2023-02-28T18:43:50+00:00", // now()
+			"visit_id": 1,
+			"date_time_stamp": "2023-02-28T18:43:50+00:00",
+			"duration": "PT1H"
+		},
+		"Location": {
+			"id": "779f81c1c2a74cecb362b5a223061d0f", // guid
+			"latitude": 45.575693,
+			"longitude": -73.81638
+		}
+	}
+}

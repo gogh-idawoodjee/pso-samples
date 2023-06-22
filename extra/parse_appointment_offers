@@ -330,6 +330,7 @@ appointment_offers = json_data['dsScheduleData']['Appointment_Offer']
 table_data = []
 
 for offer in appointment_offers:
+    # Only get the available offers
     if offer['available'].lower() == 'true':
         table_data.append({
             'id': offer['id'],

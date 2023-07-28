@@ -2,40 +2,40 @@
 	"dsScheduleData": {
 		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
 		"Input_Reference": {
-			"datetime": "2023-04-12T08:00:00+00:00",	-- always current datetime
-			"id": "5fb7f88e54404ae2ad398f9702df8b20", -- guid
+			"datetime": "2023-04-12T08:00:00+00:00",	// always current datetime
+			"id": "5fb7f88e54404ae2ad398f9702df8b20", // guid
 			"description": "Appointment Accept",
 			"input_type": "CHANGE",
 			"organisation_id": "2",
-			"dataset_id": "NORTH" -- dataset must exist and be active in PSO
+			"dataset_id": "NORTH" // dataset must exist and be active in PSO
 		},
 		"Appointment_Offer_Response": {						
-			"appointment_request_id": "c890ffed931e427b900f5ef821ef2d9d", -- taken from appointment_request.id
-			"appointment_offer_id": 9, -- integer representing appointment slot chosen			
-			"input_updated": true -- true for accept
+			"appointment_request_id": "c890ffed931e427b900f5ef821ef2d9d", // taken from appointment_request.id
+			"appointment_offer_id": 9, // integer representing appointment slot chosen			
+			"input_updated": true // true for accept
 		},
 		"Activity_SLA": {
-			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", -- ID of activity that is requesting appointments
-			"sla_type_id": "Primary SLA", -- should represent desired SLA; typically varies by activity_type
-			"datetime_start": "2023-04-17T17:28:39", -- taken from Appointment_Offer['appointment_offer_id'].window_start_datetime
-			"datetime_end": "2023-04-21T17:28:39", -- taken from Appointment_Offer['appointment_offer_id'].window_end_datetime
+			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", // ID of activity that is requesting appointments
+			"sla_type_id": "Primary SLA", // should represent desired SLA; typically varies by activity_type
+			"datetime_start": "2023-04-17T17:28:39", // taken from Appointment_Offer['appointment_offer_id'].window_start_datetime
+			"datetime_end": "2023-04-21T17:28:39", // taken from Appointment_Offer['appointment_offer_id'].window_end_datetime
 			"priority": 1,
 			"start_based": true
 		},
 		"Activity_Status": {
-			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", -- ID of activity that is requesting appointments
-			"status_id": 0, -- updated to 0 (schedulable)
+			"activity_id": "779f81c1c2a74cecb362b5a223061d0f", // ID of activity that is requesting appointments
+			"status_id": 0, // updated to 0 (schedulable)
 			"date_time_status": "2023-02-28T18:43:50+00:00", // now()
 			"visit_id": 1,
 			"date_time_stamp": "2023-02-28T18:43:50+00:00",
-			"duration": "PT1H" -- should always match duration from appointment_request message
+			"duration": "PT1H" // should always match duration from appointment_request message
 		},
-		"Object_Deletion": {  -- removing the appointment SLA as it's being replaced by the scheduling SLA
+		"Object_Deletion": {  // removing the appointment SLA as it's being replaced by the scheduling SLA
 			"object_type_id": "Activity_SLA",
 			"object_pk_name1": "activity_id",
-			"object_pk1": "779f81c1c2a74cecb362b5a223061d0f", -- ID of activity that is requesting appointments
+			"object_pk1": "779f81c1c2a74cecb362b5a223061d0f", // ID of activity that is requesting appointments
 			"object_pk_name2": "sla_type_id",
-			"object_pk2": "Appointment", -- will match the sla_type_id used during appointment_request
+			"object_pk2": "Appointment", // will match the sla_type_id used during appointment_request
 			"object_pk_name3": "priority",
 			"object_pk3": 1,
 			"object_pk_name4": "start_based",

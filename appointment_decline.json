@@ -1,0 +1,28 @@
+// an appointment decline performs the following functions
+// -- passes an Appointment_Offer_Response indiciating the offers are rejected selected and informs PSO to release all remaining slots
+// -- deletes the 'do not schedule' activity; a cascade will delete the SLA, and Status objects
+// -- passes an updated Activity_Status of 0 teelling the DSE that the activity is now schedulable
+// -- deletes the appointment SLA -- because an SLA contains three primary keys, the new Activity_SLA is considered an insert rather than an upsert
+{
+	"dsScheduleData": {
+		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+		"Input_Reference": {
+			"datetime": "2023-04-12T08:00:00+00:00",	// always current datetime
+			"id": "5fb7f88e54404ae2ad398f9702df8b21", // guid
+			"description": "Appointment Decline",
+			"input_type": "CHANGE",
+			"organisation_id": "2",
+			"dataset_id": "NORTH" // dataset must exist and be active in PSO
+		},
+		"Appointment_Offer_Response": {						
+			"appointment_request_id": "c890ffed931e427b900f5ef821ef2d9d", // taken from appointment_request.id
+			"appointment_offer_id": -1, // integer -1 declines	
+			"input_updated": true
+		},
+		"Object_Deletion": {  // removing the appointment SLA as it's being replaced by the scheduling SLA
+			"object_type_id": "Activity",
+			"object_pk_name1": "activity_id",
+			"object_pk1": "779f81c1c2a74cecb362b5a223061d0f" // ID of activity that is requesting appointments
+		}		
+	}
+}

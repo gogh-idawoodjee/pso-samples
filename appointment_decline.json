@@ -1,8 +1,7 @@
 // an appointment decline performs the following functions
 // -- passes an Appointment_Offer_Response indiciating the offers are rejected selected and informs PSO to release all remaining slots
 // -- deletes the 'do not schedule' activity; a cascade will delete the SLA, and Status objects
-// -- passes an updated Activity_Status of 0 teelling the DSE that the activity is now schedulable
-// -- deletes the appointment SLA -- because an SLA contains three primary keys, the new Activity_SLA is considered an insert rather than an upsert
+
 {
 	"dsScheduleData": {
 		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",

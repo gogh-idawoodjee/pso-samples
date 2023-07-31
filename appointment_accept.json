@@ -1,3 +1,8 @@
+// an appointment accept performs the following functions
+// -- passes an Appointment_Offer_Response indiciating the offer selected and informing PSO to release the remaining slots
+// -- passes a new Activity_SLA indiciating the selected start and end of the window selected and typically a new sla_type_id
+// -- passes an updated Activity_Status of 0 teelling the DSE that the activity is now schedulable
+// -- deletes the appointment SLA -- because an SLA contains three primary keys, the new Activity_SLA is considered an insert rather than an upsert
 {
 	"dsScheduleData": {
 		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",

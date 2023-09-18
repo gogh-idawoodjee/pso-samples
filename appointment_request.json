@@ -37,8 +37,8 @@
 			{
 				"activity_id":"779f81c1c2a74cecb362b5a223061d0f",
 				"skill_id":"skill_2"
-				}
-			],
+			}
+		],
 		"Activity_SLA": {
 			"activity_id": "779f81c1c2a74cecb362b5a223061d0f",
 			"sla_type_id": "Appointment",

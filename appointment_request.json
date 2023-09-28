@@ -29,7 +29,7 @@
 			"split_allowed": true,
 			"visit": 1
 		},
-		"Activity_Skill":[
+		"Activity_Skill":[ // optional
 			{
 				"activity_id": "779f81c1c2a74cecb362b5a223061d0f",
 				"skill_id": "skill_1"
@@ -53,14 +53,14 @@
 			"date_time_status": "2023-02-28T18:43:50+00:00", // now()
 			"visit_id": 1,
 			"date_time_stamp": "2023-02-28T18:43:50+00:00",
-			"duration": "PT1H"
+			"duration": "PT1H" // duration of the job
 		},
 		"Location": {
 			"id": "779f81c1c2a74cecb362b5a223061d0f", // guid
 			"latitude": 45.575693,
 			"longitude": -73.81638
 		},
-		"Location_Region":{
+		"Location_Region":{ // optional
 			"location_id": "779f81c1c2a74cecb362b5a223061d0f",
 			"region_id": "region_id_value", // must have at least one resource associated with this region to get slots
 		}

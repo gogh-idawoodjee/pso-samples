@@ -1,0 +1,17 @@
+{
+    "DsSystemData": {
+        "@xmlns": "http://360scheduling.com/Schema/DsSystemData.xsd",
+        "System_Input": {
+            "id": "0",
+            "input_type": "DATA",
+            "organisation_id": "1",
+            "requesting_app_instance_id": "ISH-PSO-01",
+            "requesting_app_type_id": "PSW",
+            "user_id": "admin"
+        },
+        "User_Group": {
+            "group_id": "Administrator",
+            "user_id": "theUser"
+        }
+    }
+}

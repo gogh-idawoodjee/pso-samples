@@ -20,7 +20,7 @@
 		},
 		"Object_Deletion": {  // removing the appointment SLA as it's being replaced by the scheduling SLA
 			"object_type_id": "Activity",
-			"object_pk_name1": "activity_id",
+			"object_pk_name1": "id",
 			"object_pk1": "779f81c1c2a74cecb362b5a223061d0f" // ID of activity that is requesting appointments
 		}		
 	}

@@ -1,0 +1,20 @@
+{
+	"DsSystemData": {
+		"@xmlns": "http://360scheduling.com/Schema/DsSystemData.xsd",
+		"Language": { // this block is required otherwise the Message_Text won't have any impact
+			"id": "en",
+			"message_id": "18530",
+			"set_to_default": "false"
+		}, 
+		"Message_Text": {
+			"language_id": "en",
+			"message_id": "10211",
+			"text": "Hide Unplanned Time"
+		},
+		"System_Input": {
+			"id": "0",
+			"input_type": "MESSAGE",
+			"organisation_id": "1"
+		}
+	}
+}

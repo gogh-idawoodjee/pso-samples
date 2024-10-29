@@ -1,0 +1,20 @@
+{
+	"dsScheduleData": {
+		"@xmlns": "http://360Scheduling.com/Schema/dsScheduleData.xsd",
+		"Object_Deletion": [
+			{
+				"object_pk1": "450-FIX",
+				"object_pk_name1": "id",
+				"object_type_id": "Schedule_Event"
+			}
+		],
+		"Input_Reference": {
+			"dataset_id": "NORTH",
+			"datetime": "2024-05-14T17:44:29.367+00:00",
+			"description": "Delete Event",
+			"id": "333fd21e-3d80-4d92-b617-0cd043",
+			"input_type": "CHANGE",
+			"organisation_id": 2
+		}
+	}
+}

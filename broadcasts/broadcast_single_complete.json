@@ -4,21 +4,22 @@
         "broadcast_type_id": "REST",
         "description": "One-Time DSE Broadcast",
         "id": "Schedule_Changes",
-        "allocation_type": "1",
-        "minimum_plan_quality": "100",
-        "minimum_step_interval": "1",
+        "allocation_type": 1,
+        "minimum_plan_quality": 100,
+        "minimum_step_interval": 1,
         "once_only": "true",
         "plan_type": "COMPLETE",
+        "minimum_visit_status": 1, // optional; if set to 1, only allocated activities will be included
         "time_filter_end": "2022-10-03T20:29:22+00:00" // optional end date
     },
     "Broadcast_Parameter": [
         {
-            "broadcast_id": "Schedule_Changes", // From Broadcast.id
+            "broadcast_id": "Schedule_Changes", // same as Broadcast.id
             "parameter_name": "url",
             "parameter_value": "https://webhook.site/f6cc25db-8f6c-472a-83a2-a1e697e35b6c"
         },
         {
-            "broadcast_id": "Schedule_Changes", // From Broadcast.id
+            "broadcast_id": "Schedule_Changes", // same as Broadcast.id
             "parameter_name": "mediatype",
             "parameter_value": "application/json"
         },

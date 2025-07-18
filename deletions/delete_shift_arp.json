@@ -1,0 +1,20 @@
+{
+    "DsModelling": {
+        "@xmlns": "http://360Scheduling.com/Schema/DsModelling.xsd",
+        "RAM_Data_Update": {
+            "object_type_id": "RAM_Rota_Item",
+            "object_pk_name1": "ram_rota_id",
+            "object_pk1": "ROTA_ID_HERE",
+            "object_pk_name2": "id",
+            "object_pk2": "50734cc96cfa4feeae74c2d8001279a0",
+            "delete_row": "true"
+        },
+        "RAM_Update": {
+            "organisation_id": "2",
+            "dataset_id": "DATASET_ID_HERE",
+            "user_id": "USER_FOR_REFERENCE",
+            "ram_update_type_id": "CHANGE",
+            "is_master_data": "true"
+        }
+    }
+}

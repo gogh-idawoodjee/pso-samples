@@ -38,12 +38,13 @@ if (-not $OutputPath) {
 $csharpSource = @'
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Xml;
 
 public static class XmlStripper
 {
-    public static Dictionary<string, long> Strip(string inputPath, string outputPath, string[] targetNames)
+    public static Dictionary<string, long> Strip(string inputPath, string outputPath, string[] targetNames, Action<long, long> onProgress)
     {
         var targets = new HashSet<string>(targetNames, StringComparer.Ordinal);
         var counts = new Dictionary<string, long>(StringComparer.Ordinal);
@@ -56,11 +57,22 @@ public static class XmlStripper
         writerSettings.Indent = true;
         writerSettings.Encoding = new UTF8Encoding(false);
 
-        using (XmlReader reader = XmlReader.Create(inputPath, readerSettings))
+        using (FileStream fs = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, FileOptions.SequentialScan))
+        using (XmlReader reader = XmlReader.Create(fs, readerSettings))
         using (XmlWriter writer = XmlWriter.Create(outputPath, writerSettings))
         {
+            long totalBytes = fs.Length;
+            long nodeCounter = 0;
+            const int progressEveryNNodes = 2000;
+
             while (reader.Read())
             {
+                nodeCounter++;
+                if (onProgress != null && nodeCounter % progressEveryNNodes == 0)
+                {
+                    onProgress(fs.Position, totalBytes);
+                }
+
                 if (reader.NodeType == XmlNodeType.Element && targets.Contains(reader.LocalName))
                 {
                     string name = reader.LocalName;
@@ -114,6 +126,12 @@ public static class XmlStripper
                         break;
                 }
             }
+
+            if (onProgress != null)
+            {
+                onProgress(totalBytes, totalBytes);
+            }
+
             writer.Flush();
         }
 
@@ -126,7 +144,8 @@ Add-Type -TypeDefinition $csharpSource -Language CSharp -ReferencedAssemblies @(
     'System.Xml.dll',
     'System.Xml.ReaderWriter.dll',
     'mscorlib.dll',
-    'System.dll'
+    'System.dll',
+    'System.IO.dll'
 )
 
 $targetNames = [string[]]@('Plan_Break','Shift','Slot_Usage_Rule','Plan_Route','Availability', 'Activity','Location','Allocation','Allocation_Data','Additional_Attribute','Appointment_Template','Resource_Region_Availability','Activity_Custom_URL','Activity_Skill','Resource_Skill','Resource_Preference','Resource_Region','Resource_Skill_Availability','Appointment_Template_Item','Activity_Group','Object_Group','Resource_Custom_URL','Appt_Template_Slot_Usage')
@@ -134,8 +153,22 @@ $targetNames = [string[]]@('Plan_Break','Shift','Slot_Usage_Rule','Plan_Route','
 Write-Host "Streaming through (compiled): $InputPath"
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-$counts = [XmlStripper]::Strip($InputPath, $OutputPath, $targetNames)
+# Throttle Write-Progress updates so we're not repainting the console on every callback
+$lastProgressUpdate = [System.Diagnostics.Stopwatch]::StartNew()
+$progressCallback = [Action[long, long]]{
+    param($bytesRead, $totalBytes)
+    if ($lastProgressUpdate.ElapsedMilliseconds -ge 200 -or $bytesRead -ge $totalBytes) {
+        $pct = if ($totalBytes -gt 0) { [Math]::Min(100, [Math]::Round(($bytesRead / $totalBytes) * 100, 1)) } else { 100 }
+        $mbRead = [Math]::Round($bytesRead / 1MB, 1)
+        $mbTotal = [Math]::Round($totalBytes / 1MB, 1)
+        Write-Progress -Activity "Removing elements" -Status "$mbRead MB / $mbTotal MB ($pct%)" -PercentComplete $pct
+        $lastProgressUpdate.Restart()
+    }
+}
 
+$counts = [XmlStripper]::Strip($InputPath, $OutputPath, $targetNames, $progressCallback)
+
+Write-Progress -Activity "Removing elements" -Completed
 $sw.Stop()
 
 if ($counts.Count -eq 0) {

@@ -1,21 +1,25 @@
 <#
 .SYNOPSIS
     Parses a PSO dsScheduleData XML export and builds the "plan travels" table:
-    only travels moving TO an activity (from a resource start location OR from
-    another activity), excluding any leg where either end (destination OR
-    origin) touches a PRIVATE activity_class_id or a NON-AVAILABILITY
-    activity_type_id, filtered to a single date.
+    travels moving TO an activity (from a resource start location OR from
+    another activity), PLUS the end-of-day leg from a technician's final
+    activity to their end-of-shift/home location, excluding any leg where
+    either end (destination OR origin) touches a PRIVATE activity_class_id or
+    a NON-AVAILABILITY activity_type_id, filtered to a single date.
 
 .DESCRIPTION
     No external modules required (no ImportExcel, no Python) - uses only
     PowerShell's built-in [xml] type, so this will run on a locked-down
     corporate machine with nothing installed beyond PowerShell itself.
 
-    Output is written as CSV by default (guaranteed to work everywhere, opens
-    directly in Excel). If Excel is actually installed on the machine, the
-    script will ALSO try to save a true .xlsx via COM automation - if that
-    fails for any reason (Excel not installed, COM blocked by policy, etc.)
-    it just skips that step silently and you still have the CSV.
+    Output is written as CSV (opens directly in Excel, double-click it).
+
+    Each row also includes a ready-to-click Google Maps directions link
+    between the two geocoded points -- this is just a URL (no API call, no
+    cost), so it's a free sanity-check a human can click to eyeball the route
+    without needing the Routes API validation pass. It lands as plain text
+    in the CSV; select the column in Excel and use Insert > Hyperlink (or a
+    HYPERLINK() formula column) if you want it clickable.
 
 .PARAMETER InputXmlPath
     Path to the dsScheduleData XML export.
@@ -26,10 +30,22 @@
 
 .PARAMETER OutputPath
     Base output path WITHOUT extension, e.g. ".\aug13_plan_travels" - the
-    script appends .csv (always) and .xlsx (if Excel COM automation works).
+    script appends .csv.
+
+.PARAMETER BuildImportXml
+    Switch. If passed, also writes a second file: an import-ready XML
+    containing only a specific subset of entity types (see KeepElements
+    below), everything else stripped out. Named after the INPUT file (not
+    OutputPath) with "_import.xml" appended -- e.g. "aug13north(1).xml" in
+    produces "aug13north(1)_import.xml" alongside the CSV. Off by default
+    since it's the slower of the two steps on a large file; only pays the
+    cost when you actually need the filtered file.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\Build-PlanTravelsReport.ps1 -InputXmlPath ".\aug13north(1).xml" -Date "2026-08-13" -OutputPath ".\aug13_plan_travels"
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File .\Build-PlanTravelsReport.ps1 -InputXmlPath ".\aug13north(1).xml" -Date "2026-08-13" -OutputPath ".\aug13_plan_travels" -BuildImportXml
 #>
 
 [CmdletBinding()]
@@ -40,7 +56,34 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Date,
 
-    [string]$OutputPath = ".\plan_travels_output"
+    [string]$OutputPath = ".\plan_travels_output",
+
+    [switch]$BuildImportXml
+)
+
+# Entity types kept in the filtered "_import.xml" companion file -- everything
+# else under <dsScheduleData> is dropped. Edit this list if the required
+# entity set changes.
+$KeepElements = @(
+    'Activity',
+    'Activity_Custom_URL',
+    'Additional_Attribute',
+    'Input_Reference',
+    'Location',
+    'Location_Region',
+    'Region',
+    'Resource_Preference',
+    'Resource_Region',
+    'Resource_Region_Availability',
+    'Resource_Skill',
+    'Resource_Skill_Availability',
+    'Resource_Type',
+    'Resources',
+    'Shift',
+    'Shift_Break',
+    'Shift_Type',
+    'Skill',
+    'SLA_Type'
 )
 
 function Write-Log {
@@ -72,16 +115,170 @@ $activityNodes  = @($root.Activity)
 $locationNodes  = @($root.Location)
 $resourceNodes  = @($root.Resources)
 $travelNodes    = @($root.Plan_Travel)
+$locationRegionNodes = @($root.Location_Region)
 
-Write-Log "  Activities:   $($activityNodes.Count)"
-Write-Log "  Locations:    $($locationNodes.Count)"
-Write-Log "  Resources:    $($resourceNodes.Count)"
-Write-Log "  Plan_Travel:  $($travelNodes.Count)"
+Write-Log "  Activities:       $($activityNodes.Count)"
+Write-Log "  Locations:        $($locationNodes.Count)"
+Write-Log "  Resources:        $($resourceNodes.Count)"
+Write-Log "  Plan_Travel:      $($travelNodes.Count)"
+Write-Log "  Location_Region:  $($locationRegionNodes.Count)"
+
+# ---------------------------------------------------------------------------
+# 1b. Build the filtered "_import.xml" companion file -- a copy of the
+#     dsScheduleData document containing ONLY the entity types in
+#     $KeepElements, everything else stripped out. Named after the INPUT
+#     file, not -OutputPath, per requirement. Only runs if -BuildImportXml
+#     is passed.
+#
+#     Uses a compiled (Add-Type/C#) streaming XmlReader/XmlWriter pass
+#     instead of DOM + ImportNode -- same approach as the fast
+#     Remove-AvailabilityElements script, just inverted to a whitelist and
+#     scoped to depth 1 (direct children of the root) so a same-named
+#     element nested inside a kept entity is never mistakenly stripped.
+# ---------------------------------------------------------------------------
+if ($BuildImportXml) {
+    Write-Log "-BuildImportXml passed -- also building the filtered import XML..."
+    $inputBaseName = [System.IO.Path]::GetFileNameWithoutExtension($InputXmlPath)
+    $outputDir = Split-Path -Path "$OutputPath.csv" -Parent
+    if ([string]::IsNullOrEmpty($outputDir)) { $outputDir = "." }
+    $importXmlPath = Join-Path -Path $outputDir -ChildPath "$($inputBaseName)_import.xml"
+
+    $csharpSource = @'
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Xml;
+
+public static class XmlKeepOnlyFilter
+{
+    // Keeps only elements in targetNames that appear at depth 1 (i.e. direct
+    // children of the root element). Everything else at depth 1 is dropped
+    // (reader.Skip() over the whole subtree). Elements at any other depth
+    // are never filtered -- they just get copied through as part of
+    // whichever depth-1 element they belong to.
+    public static Dictionary<string, long> KeepOnly(string inputPath, string outputPath, string[] targetNames)
+    {
+        var targets = new HashSet<string>(targetNames, StringComparer.Ordinal);
+        var counts = new Dictionary<string, long>(StringComparer.Ordinal);
+
+        var readerSettings = new XmlReaderSettings();
+        readerSettings.DtdProcessing = DtdProcessing.Parse;
+        readerSettings.IgnoreWhitespace = false;
+
+        var writerSettings = new XmlWriterSettings();
+        writerSettings.Indent = true;
+        writerSettings.Encoding = new UTF8Encoding(false);
+
+        int depth = 0;
+
+        using (XmlReader reader = XmlReader.Create(inputPath, readerSettings))
+        using (XmlWriter writer = XmlWriter.Create(outputPath, writerSettings))
+        {
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && depth == 1 && !targets.Contains(reader.LocalName))
+                {
+                    string name = reader.LocalName;
+                    long current;
+                    counts.TryGetValue(name, out current);
+                    counts[name] = current + 1;
+                    reader.Skip();
+                    continue;
+                }
+
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
+                        if (reader.HasAttributes)
+                        {
+                            for (int i = 0; i < reader.AttributeCount; i++)
+                            {
+                                reader.MoveToAttribute(i);
+                                writer.WriteAttributeString(reader.Prefix, reader.LocalName, reader.NamespaceURI, reader.Value);
+                            }
+                            reader.MoveToElement();
+                        }
+                        if (reader.IsEmptyElement)
+                        {
+                            writer.WriteEndElement();
+                        }
+                        else
+                        {
+                            depth++;
+                        }
+                        break;
+                    case XmlNodeType.Text:
+                        writer.WriteString(reader.Value);
+                        break;
+                    case XmlNodeType.CDATA:
+                        writer.WriteCData(reader.Value);
+                        break;
+                    case XmlNodeType.ProcessingInstruction:
+                        if (reader.Name != "xml")
+                            writer.WriteProcessingInstruction(reader.Name, reader.Value);
+                        break;
+                    case XmlNodeType.Comment:
+                        writer.WriteComment(reader.Value);
+                        break;
+                    case XmlNodeType.Whitespace:
+                    case XmlNodeType.SignificantWhitespace:
+                        writer.WriteWhitespace(reader.Value);
+                        break;
+                    case XmlNodeType.EndElement:
+                        writer.WriteFullEndElement();
+                        depth--;
+                        break;
+                    case XmlNodeType.DocumentType:
+                        writer.WriteDocType(reader.Name, reader.GetAttribute("PUBLIC"), reader.GetAttribute("SYSTEM"), reader.Value);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            writer.Flush();
+        }
+
+        return counts;
+    }
+}
+'@
+
+    Add-Type -TypeDefinition $csharpSource -Language CSharp -ReferencedAssemblies @(
+        'System.Xml.dll',
+        'System.Xml.ReaderWriter.dll',
+        'mscorlib.dll',
+        'System.dll'
+    )
+
+    Write-Log "Building filtered import XML (compiled streaming pass, keeping only: $($KeepElements -join ', '))..."
+    $importSw = [System.Diagnostics.Stopwatch]::StartNew()
+
+    $droppedCounts = [XmlKeepOnlyFilter]::KeepOnly($InputXmlPath, $importXmlPath, [string[]]$KeepElements)
+
+    $importSw.Stop()
+
+    Write-Log "  Import XML written to $importXmlPath (in $([math]::Round($importSw.Elapsed.TotalSeconds, 1))s)"
+    if ($droppedCounts.Count -eq 0) {
+        Write-Log "  Nothing dropped -- every top-level element was already in the keep list."
+    }
+    else {
+        $totalDropped = 0
+        foreach ($key in $droppedCounts.Keys) {
+            Write-Log ("    Dropped {0,-32} {1}" -f $key, $droppedCounts[$key])
+            $totalDropped += $droppedCounts[$key]
+        }
+        Write-Log "  Dropped $totalDropped element(s) total (not in keep list)."
+    }
+}
+else {
+    Write-Log "Skipping filtered import XML (pass -BuildImportXml to also produce it)."
+}
 
 # ---------------------------------------------------------------------------
 # 2. Build lookup tables
 # ---------------------------------------------------------------------------
-Write-Log "Building Activity lookup (id -> class/type/description)..."
+Write-Log "Building Activity lookup (id -> class/type/description/location)..."
 $activityLookup = @{}
 foreach ($a in $activityNodes) {
     if ($null -ne $a.id) {
@@ -89,8 +286,30 @@ foreach ($a in $activityNodes) {
             ClassId     = [string]$a.activity_class_id
             TypeId      = [string]$a.activity_type_id
             Description = [string]$a.description
+            LocationId  = [string]$a.location_id
         }
     }
+}
+
+Write-Log "Building Location_Region lookup (location_id -> region_id/GB)..."
+$regionLookup = @{}
+foreach ($lr in $locationRegionNodes) {
+    $locId = [string]$lr.location_id
+    $regId = [string]$lr.region_id
+    if (-not [string]::IsNullOrEmpty($locId) -and -not $regionLookup.ContainsKey($locId)) {
+        # First match wins if a location somehow maps to more than one region --
+        # this data showed a strict 1:1 mapping, but this guards against that
+        # not always being true.
+        $regionLookup[$locId] = $regId
+    }
+}
+
+function Get-ActivityGB {
+    param([string]$ActivityId)
+    if ([string]::IsNullOrEmpty($ActivityId)) { return $null }
+    $act = $activityLookup[$ActivityId]
+    if ($null -eq $act -or [string]::IsNullOrEmpty($act.LocationId)) { return $null }
+    return $regionLookup[$act.LocationId]
 }
 
 Write-Log "Building Location lookup (id -> lat/long)..."
@@ -125,6 +344,39 @@ function Test-PrivateOrNonAvailability {
 }
 
 # ---------------------------------------------------------------------------
+# 3c. Helper: does this Plan_Travel row represent a real END-OF-DAY leg
+#     (Activity -> a non-activity end location, e.g. shift end / home base)?
+#     Distinguished from a genuine "no destination at all" row by requiring
+#     BOTH a previous_activity_id AND an end_location_id.
+# ---------------------------------------------------------------------------
+function Test-EndOfDayLeg {
+    param($PlanTravelNode)
+    $hasNoDestActivity = [string]::IsNullOrEmpty([string]$PlanTravelNode.activity_id)
+    $hasPreviousActivity = -not [string]::IsNullOrEmpty([string]$PlanTravelNode.previous_activity_id)
+    $hasEndLocation = -not [string]::IsNullOrEmpty([string]$PlanTravelNode.end_location_id)
+    return $hasNoDestActivity -and $hasPreviousActivity -and $hasEndLocation
+}
+
+# ---------------------------------------------------------------------------
+# 3b. Helper: build a free Google Maps directions link (no API call/cost --
+#     just a deep-link URL a human can click to eyeball the route)
+# ---------------------------------------------------------------------------
+function Get-GoogleMapsDirectionsLink {
+    param(
+        [Nullable[double]]$OriginLat,
+        [Nullable[double]]$OriginLon,
+        [Nullable[double]]$DestLat,
+        [Nullable[double]]$DestLon
+    )
+    if ($null -eq $OriginLat -or $null -eq $OriginLon -or $null -eq $DestLat -or $null -eq $DestLon) {
+        return $null
+    }
+    $origin = "{0},{1}" -f $OriginLat, $OriginLon
+    $dest   = "{0},{1}" -f $DestLat, $DestLon
+    return "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$dest&travelmode=driving"
+}
+
+# ---------------------------------------------------------------------------
 # 4. Filter + build output rows
 #    ---> EDIT THE $Columns BLOCK BELOW TO ADD/REMOVE/REORDER OUTPUT COLUMNS
 # ---------------------------------------------------------------------------
@@ -134,6 +386,7 @@ $results = New-Object System.Collections.Generic.List[PSCustomObject]
 $totalOnDate = 0
 $excludedDestination = 0
 $excludedOrigin = 0
+$endOfDayCount = 0
 
 foreach ($pt in $travelNodes) {
 
@@ -143,16 +396,18 @@ foreach ($pt in $travelNodes) {
     }
     $totalOnDate++
 
-    $activityId          = [string]$pt.activity_id            # destination
-    $previousActivityId  = [string]$pt.previous_activity_id   # origin (if activity->activity)
+    $activityId          = [string]$pt.activity_id            # destination (blank for end-of-day legs)
+    $previousActivityId  = [string]$pt.previous_activity_id   # origin (if activity->activity, or activity->end-of-day)
 
-    # must be moving TO an activity (destination present)
-    if ([string]::IsNullOrEmpty($activityId)) {
+    $isEndOfDayLeg = Test-EndOfDayLeg -PlanTravelNode $pt
+
+    # must be moving TO an activity, OR be a genuine end-of-day leg (activity -> end location)
+    if ([string]::IsNullOrEmpty($activityId) -and -not $isEndOfDayLeg) {
         continue
     }
 
-    # exclude if destination is private/non-availability
-    if (Test-PrivateOrNonAvailability -ActivityId $activityId) {
+    # exclude if destination is private/non-availability (only applies when there IS a destination activity)
+    if (-not $isEndOfDayLeg -and (Test-PrivateOrNonAvailability -ActivityId $activityId)) {
         $excludedDestination++
         continue
     }
@@ -163,12 +418,20 @@ foreach ($pt in $travelNodes) {
         continue
     }
 
-    $act        = $activityLookup[$activityId]
+    $act        = if ($isEndOfDayLeg) { $null } else { $activityLookup[$activityId] }
     $startLoc   = $locationLookup[[string]$pt.start_location_id]
     $endLoc     = $locationLookup[[string]$pt.end_location_id]
     $resourceId = [string]$pt.resource_id
 
-    $direction  = if ([string]::IsNullOrEmpty($previousActivityId)) { 'Start Location -> Activity' } else { 'Activity -> Activity' }
+    $direction = if ($isEndOfDayLeg) {
+        'Activity -> End Location'
+    } elseif ([string]::IsNullOrEmpty($previousActivityId)) {
+        'Start Location -> Activity'
+    } else {
+        'Activity -> Activity'
+    }
+
+    if ($isEndOfDayLeg) { $endOfDayCount++ }
 
     $distanceKm = $null
     if ($pt.distance) {
@@ -182,23 +445,49 @@ foreach ($pt in $travelNodes) {
         $s = if ($matches[3]) { [int]$matches[3] } else { 0 }
         $travelSeconds = ($h * 3600) + ($m * 60) + $s
     }
+    $travelMinutes = if ($null -ne $travelSeconds) { [math]::Round($travelSeconds / 60, 1) } else { $null }
+
+    $originLat = if ($startLoc) { $startLoc.Lat } else { $null }
+    $originLon = if ($startLoc) { $startLoc.Lon } else { $null }
+    $destLat   = if ($endLoc)   { $endLoc.Lat }   else { $null }
+    $destLon   = if ($endLoc)   { $endLoc.Lon }   else { $null }
+
+    $mapsLink = Get-GoogleMapsDirectionsLink -OriginLat $originLat -OriginLon $originLon -DestLat $destLat -DestLon $destLon
+
+    # GB (region) of the previous activity's location and the destination
+    # activity's location. Blank for the previous-activity one when this leg
+    # starts from a resource's Start Location rather than another activity --
+    # there's no "previous activity" to resolve a region for in that case.
+    $originGB = if ([string]::IsNullOrEmpty($previousActivityId)) { $null } else { Get-ActivityGB -ActivityId $previousActivityId }
+    $destGB   = Get-ActivityGB -ActivityId $activityId
+
+    # Previous (origin) activity's own type/description -- separate lookup
+    # from $act (which is always the destination activity). Blank whenever
+    # there's no previous activity (Start Location -> Activity legs).
+    $prevAct = if ([string]::IsNullOrEmpty($previousActivityId)) { $null } else { $activityLookup[$previousActivityId] }
 
     # ---- EDIT HERE: this is the full set of available fields per row ----
     $row = [PSCustomObject]@{
-        'Resource ID'                = $resourceId
-        'Resource Name'              = $resourceLookup[$resourceId]
-        'Direction'                  = $direction
-        'Previous Activity ID'       = $previousActivityId
-        'Activity ID (Destination)'  = $activityId
-        'Activity Type'              = if ($act) { $act.TypeId } else { $null }
-        'Activity Description'      = if ($act) { $act.Description } else { $null }
-        'Start Location Latitude'    = if ($startLoc) { $startLoc.Lat } else { $null }
-        'Start Location Longitude'   = if ($startLoc) { $startLoc.Lon } else { $null }
-        'End Location Latitude'      = if ($endLoc) { $endLoc.Lat } else { $null }
-        'End Location Longitude'     = if ($endLoc) { $endLoc.Lon } else { $null }
-        'Distance (km)'              = $distanceKm
-        'Expected Travel Time (sec)' = $travelSeconds
-        'Plan ID'                    = [string]$pt.plan_id
+        'Resource ID'                        = $resourceId
+        'Resource Name'                      = $resourceLookup[$resourceId]
+        'Direction'                          = $direction
+        'Previous Activity ID'               = $previousActivityId
+        'GB (Previous Activity)'             = $originGB
+        'Previous Activity Type'             = if ($prevAct) { $prevAct.TypeId } else { $null }
+        'Previous Activity Description'      = if ($prevAct) { $prevAct.Description } else { $null }
+        'Activity ID (Destination)'          = $activityId
+        'GB (Destination Activity)'          = $destGB
+        'Destination Activity Type'          = if ($act) { $act.TypeId } else { $null }
+        'Destination Activity Description'   = if ($act) { $act.Description } else { $null }
+        'Start Location Latitude'            = $originLat
+        'Start Location Longitude'           = $originLon
+        'End Location Latitude'              = $destLat
+        'End Location Longitude'             = $destLon
+        'Distance (km)'                      = $distanceKm
+        'Expected Travel Time (min)'         = $travelMinutes
+        'Expected Travel Time (sec)'         = $travelSeconds
+        'Google Maps Directions Link'        = $mapsLink
+        'Plan ID'                            = [string]$pt.plan_id
     }
     $results.Add($row)
 }
@@ -206,6 +495,7 @@ foreach ($pt in $travelNodes) {
 Write-Log "  Rows on $($Date): $totalOnDate"
 Write-Log "  Excluded (destination private/non-availability): $excludedDestination"
 Write-Log "  Excluded (origin private/non-availability):      $excludedOrigin"
+Write-Log "  End-of-day legs included (Activity -> End Location): $endOfDayCount"
 Write-Log "  FINAL rows:                                       $($results.Count)"
 
 if ($results.Count -eq 0) {
@@ -218,39 +508,31 @@ $results = $results | Sort-Object 'Resource ID', 'Activity ID (Destination)'
 
 # ---------------------------------------------------------------------------
 # 5. Write CSV (always works, no dependencies)
+#    Wrapped with retry in case a leftover process still has this exact file
+#    locked from a previous run.
 # ---------------------------------------------------------------------------
 $csvPath = "$OutputPath.csv"
 Write-Log "Writing CSV to $csvPath ..."
-$results | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8
+
+$maxAttempts = 5
+$attempt = 0
+$csvWritten = $false
+while (-not $csvWritten -and $attempt -lt $maxAttempts) {
+    $attempt++
+    try {
+        $results | Export-Csv -Path $csvPath -NoTypeInformation -Encoding UTF8 -ErrorAction Stop
+        $csvWritten = $true
+    }
+    catch {
+        if ($attempt -ge $maxAttempts) {
+            Write-Error "Could not write $csvPath after $maxAttempts attempts -- it's likely locked by another process. Error: $($_.Exception.Message)"
+            exit 1
+        }
+        Write-Log "  $csvPath appears locked (attempt $attempt of $maxAttempts) -- retrying in 2s..."
+        Start-Sleep -Seconds 2
+    }
+}
 Write-Log "  CSV written. This opens directly in Excel (double-click it)."
-
-# ---------------------------------------------------------------------------
-# 6. Try to also produce a real .xlsx via Excel COM automation
-#    (only works if Excel is actually installed locally - skips cleanly if not)
-# ---------------------------------------------------------------------------
-$xlsxPath = (Resolve-Path -Path (Split-Path $csvPath -Parent) -ErrorAction SilentlyContinue).Path
-$xlsxFullPath = Join-Path -Path (Get-Location) -ChildPath "$OutputPath.xlsx"
-
-Write-Log "Attempting to also save a native .xlsx via Excel COM automation (optional, skips silently if Excel isn't installed)..."
-try {
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
-    $excel.DisplayAlerts = $false
-
-    $workbook = $excel.Workbooks.Open((Resolve-Path $csvPath).Path)
-    $fullXlsxPath = [System.IO.Path]::GetFullPath("$OutputPath.xlsx")
-    $workbook.SaveAs($fullXlsxPath, 51)  # 51 = xlOpenXMLWorkbook (.xlsx)
-    $workbook.Close($false)
-    $excel.Quit()
-
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($workbook) | Out-Null
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
-
-    Write-Log "  .xlsx written to $fullXlsxPath"
-}
-catch {
-    Write-Log "  Skipped .xlsx (Excel COM automation not available on this machine: $($_.Exception.Message))"
-    Write-Log "  That's fine - the CSV at $csvPath opens fine in Excel anyway."
-}
+Write-Log "  Google Maps links are in a plain text column -- select the column in Excel and use Insert > Hyperlink, or wrap it in a HYPERLINK() formula column, if you want them clickable."
 
 Write-Log "=== Done ==="
